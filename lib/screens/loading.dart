@@ -56,7 +56,9 @@ class _LoadingState extends State<Loading> {
       ),
       body: Center(
           child: ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                getLocation();
+              },
               child: const Text(
                 'Get Location',
                 style: TextStyle(color: Colors.black),
