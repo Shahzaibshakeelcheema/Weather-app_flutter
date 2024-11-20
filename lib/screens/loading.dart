@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class Loading extends StatefulWidget {
   const Loading({super.key});
@@ -9,39 +11,51 @@ class Loading extends StatefulWidget {
   State<Loading> createState() => _LoadingState();
 }
 
-final LocationSettings locationSettings = LocationSettings(
+const LocationSettings locationSettings = LocationSettings(
   accuracy: LocationAccuracy.high,
   distanceFilter: 100,
 );
 
-Future <void> getLocation () async {
+const apiKey = '0c87fb8ee444ff1a89cfc638afbba244';
 
-  PermissionStatus permission =  await Permission.location.request();
+Future<void> getLocation() async {
+  PermissionStatus permission = await Permission.location.request();
 
   if (permission == PermissionStatus.granted) {
-    try{
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+          locationSettings: locationSettings);
 
-      Position position = await Geolocator.getCurrentPosition(locationSettings: locationSettings);
-
-      print ("user's location: ${position.latitude}, ${position.longitude}");
-
-    }
-    catch(e){
+      print("user's location: ${position.latitude}, ${position.longitude}");
+    } catch (e) {
       print("Error fetching the location: $e");
     }
+  } else if (permission == PermissionStatus.denied) {
+    print("Location permission denied");
+  } else if (permission == PermissionStatus.permanentlyDenied) {
+    print('Location permission permanently denied');
+    openAppSettings();
   }
-  else if (permission== PermissionStatus.denied)
-{
-  print("Location permission denied");
 }
-else if (permission== PermissionStatus.permanentlyDenied)
-{
-print ('Location permission permanently denied');
-openAppSettings();
 
-}}
+void getData() async {
+  final response = await http.get(Uri.parse(
+      'https://api.openweathermap.org/data/2.5/weather?lat=33.44&lon=-94.04&appid=$apiKey'));
+
+  if (response.statusCode == 200) {
+    print('Data loaded successfully : ${response.body}');
+  } else {
+    print('Failed to laod data: ${response.statusCode} - ${response.body}');
+  }
+}
 
 class _LoadingState extends State<Loading> {
+  @override
+  void initState() {
+    super.initState();
+    getData();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -57,7 +71,7 @@ class _LoadingState extends State<Loading> {
       body: Center(
           child: ElevatedButton(
               onPressed: () {
-                getLocation();
+                getData();
               },
               child: const Text(
                 'Get Location',
